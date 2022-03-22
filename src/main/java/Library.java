@@ -7,6 +7,12 @@ import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+/*import java.text.SimpleDateFormat;  
+import java.util.Date; 
+import java.util.*;
+import java.text.*;*/
+
 @Path("/book")
 public class Library {
     private final String error = "Server error, contact administrators";
@@ -130,6 +136,41 @@ public class Library {
             return Response.serverError().entity(obj).build();
         }
         String obj = new Gson().toJson("Libro con ISBN:" + isbn + " eliminato con successo");
+        return Response.ok(obj,MediaType.APPLICATION_JSON).build();
+    }
+
+    @POST
+    @Path("/newLead")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public Response addLead(@FormParam("IDLibro") String IDLibro,
+                           @FormParam("IDUtenti") String IDUtenti,
+                           @FormParam("DataInizio") String DataInizio,
+                           @FormParam("DataFine") String DataFine){
+        if(checkParams(IDLibro, IDUtenti, DataInizio)) {
+            String obj = new Gson().toJson("Parameters must be valid");
+            return Response.serverError().entity(obj).build();
+        }  
+        /*Date date1=new SimpleDateFormat("dd/MM/yyyy").parse(DataInizio); 
+        Date DataF = date1.add(Calendar.MONTH, 1);*/
+        final String QUERY = "INSERT INTO Libri(IDLibro,IDUtenti,DataInizio,DataFine) VALUES(?,?,"+DataInizio+","+DataFine+")";
+        final String[] data = Database.getData();
+        try(
+
+                Connection conn = DriverManager.getConnection(data[0]);
+                PreparedStatement pstmt = conn.prepareStatement( QUERY )
+        ) {
+            pstmt.setString(1,IDLibro);
+            pstmt.setString(2,IDUtenti);
+            pstmt.setString(3,DataInizio);
+            pstmt.setString(3,DataFine);
+            pstmt.execute();
+        }catch (SQLException e){
+            e.printStackTrace();
+            String obj = new Gson().toJson(error);
+            return Response.serverError().entity(obj).build();
+        }
+        String obj = new Gson().toJson("Prestito del libro con id:" + IDLibro + " eseguito con successo");
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
 }
