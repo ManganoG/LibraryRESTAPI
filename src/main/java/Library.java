@@ -163,7 +163,7 @@ public class Library {
             pstmt.setString(1,IDLibro);
             pstmt.setString(2,IDUtenti);
             pstmt.setString(3,DataInizio);
-            pstmt.setString(3,DataFine);
+            pstmt.setString(4,DataFine);
             pstmt.execute();
         }catch (SQLException e){
             e.printStackTrace();
