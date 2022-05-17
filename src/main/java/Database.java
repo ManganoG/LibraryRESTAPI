@@ -11,7 +11,7 @@ public class Database {
 
         final String DB_URL = "jdbc:ucanaccess:///workspace/LibraryRESTAPI/arioli.accdb;memory=false";
       
-        String[] data = new String[3];
+        String[] data = new String[4];
         data[0] = DB_URL;
    
         return data;
