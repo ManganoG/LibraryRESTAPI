@@ -31,7 +31,7 @@ public class Library {
                 book.setTitolo(results.getString("Titolo"));
                 book.setAutore(results.getString("Autore"));
                 book.setISBN(results.getString("ISBN"));
-                book.setPrezzo(results.getString("Prezzo"));
+                book.setPrezzo(results.getDouble("Prezzo"));
                 books.add(book);
 
             }
@@ -137,4 +137,44 @@ public class Library {
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
 
+    
+    @POST
+    @Path("/find")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response read(@FormParam("Autore") String autore,
+                         @FormParam("Prezzo") Double prezzo){
+        if(autore == null || autore.trim().length() == 0 || prezzo==null || prezzo<=0 ){
+            String obj = new Gson().toJson("i valori devono essere validi");
+            return Response.serverError().entity(obj).build();
+        }
+        final String QUERY = "SELECT * FROM Libri WHERE Autore = ? AND Prezzo <= ?";
+
+        final List<Book> books = new ArrayList<>();
+        final String[] data = Database.getData();
+        
+        try(
+
+                Connection conn = DriverManager.getConnection(data[0]);
+                PreparedStatement pstmt = conn.prepareStatement( QUERY )
+        ) {
+            pstmt.setString(1,autore);
+            pstmt.setDouble(2,prezzo);
+            ResultSet results =  pstmt.executeQuery();
+            while (results.next()){
+                Book book = new Book();
+                book.setTitolo(results.getString("Titolo"));
+                book.setAutore(results.getString("Autore"));
+                book.setISBN(results.getString("ISBN"));
+                book.setPrezzo(results.getDouble("Prezzo"));
+                books.add(book);
+
+            }
+        }catch (SQLException e){
+            e.printStackTrace();
+            String obj = new Gson().toJson(error);
+            return Response.serverError().entity(obj).build();
+        }
+        String obj = new Gson().toJson(books);
+        return Response.status(200).entity(obj).build();
+    }
 }
