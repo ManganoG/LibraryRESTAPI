@@ -137,44 +137,48 @@ public class Library {
         return Response.ok(obj,MediaType.APPLICATION_JSON).build();
     }
 
-    
-    @POST
+    private boolean checkParams(String autore, double prezzo) {
+        return false;
+    }
+    @GET
     @Path("/find")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response read(@FormParam("Autore") String autore,
-                         @FormParam("Prezzo") Double prezzo){
-        if(autore == null || autore.trim().length() == 0 || prezzo==null || prezzo<=0 ){
-            String obj = new Gson().toJson("i valori devono essere validi");
-            return Response.serverError().entity(obj).build();
+    public Response read(@QueryParam("Autore") String Autore,
+                          @QueryParam("Prezzo") Double Prezzo) {
+                String obj;
+                System.out.println("------------------------------------Z " + Autore+" "+Prezzo);
+        if (checkParams(Autore, Prezzo)) {
+          obj = new Gson().toJson("Parameters must be valid");
+           return Response.serverError().entity(obj).build();
         }
-        final String QUERY = "SELECT * FROM Libri WHERE Autore = ? AND Prezzo <= ?";
+            final String QUERY = "SELECT * FROM Libri WHERE Autore = ? AND Prezzo < ?";
+            final List<Book> books = new ArrayList<>();
+            final String[] data = Database.getData();
+            try (
 
-        final List<Book> books = new ArrayList<>();
-        final String[] data = Database.getData();
-        
-        try(
+                    Connection conn = DriverManager.getConnection(data[0]);
+                    PreparedStatement pstmt = conn.prepareStatement(QUERY)) {
+                        pstmt.setString(1, Autore);
+                        pstmt.setDouble(2, Prezzo);
+                ResultSet results = pstmt.executeQuery();
+                while (results.next()) {
+                    Book book = new Book();
+                    book.setTitolo(results.getString("Titolo"));
+                    book.setAutore(results.getString("Autore"));
+                    book.setISBN(results.getString("ISBN"));
+                    book.setPrezzo(results.getDouble("Prezzo"));
+                    books.add(book);
 
-                Connection conn = DriverManager.getConnection(data[0]);
-                PreparedStatement pstmt = conn.prepareStatement( QUERY )
-        ) {
-            pstmt.setString(1,autore);
-            pstmt.setDouble(2,prezzo);
-            ResultSet results =  pstmt.executeQuery();
-            while (results.next()){
-                Book book = new Book();
-                book.setTitolo(results.getString("Titolo"));
-                book.setAutore(results.getString("Autore"));
-                book.setISBN(results.getString("ISBN"));
-                book.setPrezzo(results.getDouble("Prezzo"));
-                books.add(book);
-
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                obj = new Gson().toJson(error);
+                return Response.serverError().entity(obj).build();
             }
-        }catch (SQLException e){
-            e.printStackTrace();
-            String obj = new Gson().toJson(error);
-            return Response.serverError().entity(obj).build();
-        }
-        String obj = new Gson().toJson(books);
-        return Response.status(200).entity(obj).build();
+            obj = new Gson().toJson(books);
+            return Response.status(200).entity(obj).build();
     }
+        
+
+  
 }
